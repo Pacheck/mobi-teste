@@ -19,7 +19,23 @@ export const CardWrapper = styled(Card)({
   padding: '30px 40px',
   width: 450,
   height: 'auto',
-  backgroundColor: 'white'
+  backgroundColor: 'white',
+
+  '@media(max-width: 560px)': {
+    width: '100%',
+    alignItems: 'center',
+
+    '> div': {
+      left: '50%',
+      width: '90%'
+    },
+
+    button: {
+      width: '90%',
+      left: 'initial',
+      transform: 'initial'
+    }
+  }
 });
 
 export const Header = styled.header({

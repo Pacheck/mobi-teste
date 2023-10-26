@@ -30,6 +30,7 @@ const Resultado = () => {
           <div>
             <h1>Tabela Fipe: Preço {resultInfo.Marca} {resultInfo.Modelo} {resultInfo.AnoModelo}</h1>
             <span>{resultInfo.Valor}</span>
+            <h5>Este é o preço de compra do veículo</h5>
           </div>
         </Container>
       </Suspense>
