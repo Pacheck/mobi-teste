@@ -1,95 +1,113 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import React, {useEffect, useState} from "react";
+import {saveBrandList, saveModelList, saveYearList, setResultUrl} from "@/redux/features/car-list-slice";
+import CustomAutocomplete from "@/app/lib/select/custom-autocomplete";
+import {TextField, Typography} from "@mui/material";
+import {Car} from "@/redux/types";
+import {CardWrapper, Container, CustomButton, Header} from "@/app/page.styles";
+import {useRouter} from "next/navigation";
+
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+  const router = useRouter();
+  const dispatch = useAppDispatch();
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+ const carLists = useAppSelector((state) => state.carListsReducer);
+ const [selectedBrand, setSelectedBrand] = useState<Car | null>(null);
+ const [selectedModel, setSelectedModel] = useState<Car | null>(null);
+ const [selectedYear, setSelectedYear] = useState<Car | null>(null);
+
+ let isBtnDisabled = !selectedBrand || !selectedModel || !selectedYear;
+
+ const loadModelData = async (brandCode: string | undefined) => {
+   const response = await fetch(`/api/carros/marcas/${brandCode}/modelos`).then(res => res.json());
+   dispatch(saveModelList(response));
+ }
+
+ const loadYearData = async (modelCode: string | undefined) => {
+   const response = await fetch(`/api/carros/marcas/${selectedBrand?.codigo}/modelos/${modelCode}/anos`).then(res => res.json());
+   console.log(response);
+   dispatch(saveYearList(response));
+ }
+
+ const navigateToResultPage = () => {
+   dispatch(setResultUrl(`/api/carros/marcas/${selectedBrand?.codigo}/modelos/${selectedModel?.codigo}/anos/${selectedYear?.codigo}`));
+   router.push('/resultado');
+ }
+
+  useEffect(() => {
+    const loadBrandData = async () => {
+      const response = await fetch('/api/carros/marcas').then(res => res.json());
+      dispatch(saveBrandList(response))
+    }
+
+    loadBrandData();
+  }, []);
+
+ return (
+   <Container>
+       <Header>
+        <h1>Tabela Fipe</h1>
+        <h3>Consulte o valor de um veículo de forma gratuita</h3>
+       </Header>
+     <CardWrapper>
+      <CustomAutocomplete
+        value={selectedBrand}
+        options={carLists.brandList}
+        onChange={(event, value, reason) => {
+            setSelectedModel(null);
+
+          if(reason === 'selectOption') {
+            setSelectedBrand(value);
+            loadModelData(value.codigo);
+          }
+
+          if(reason === 'clear') {
+            setSelectedBrand(null);
+          }
+        }}
+        renderInput={(params) => <TextField {...params} label="Marca" />}
+      />
+       <CustomAutocomplete
+          value={selectedModel}
+          options={carLists.modelList}
+          onChange={(event, value, reason) => {
+            if(reason === 'selectOption'){
+              setSelectedModel(value);
+              loadYearData(value.codigo);
+            }
+
+            if(reason === 'clear') {
+              setSelectedModel(null);
+            }
+          }}
+          renderInput={(params) => <TextField {...params} label="Modelo" />}
+          disabled={!selectedBrand}
         />
-      </div>
+       {
+         selectedModel && (
+           <CustomAutocomplete
+             options={carLists.yearList}
+             onChange={(event, value, reason) => {
+               if(reason === "selectOption"){
+                setSelectedYear(value)
+               }
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+               if(reason === "clear") {
+                setSelectedYear(null);
+               }
+             }}
+             renderInput={(params) => <TextField {...params} label="Ano" />}
+           />
+         )
+       }
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+       <CustomButton variant="contained" disabled={isBtnDisabled} onClick={navigateToResultPage}>
+        <Typography component={"p"}>Consultar preço</Typography>
+       </CustomButton>
+     </CardWrapper>
+   </Container>
+ );
 }
