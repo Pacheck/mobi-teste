@@ -20,7 +20,7 @@ const Resultado = () => {
     }
 
     loadResultData();
-  }, []);
+  }, [carStore.resultUrl, dispatch]);
 
   console.log(carStore);
 

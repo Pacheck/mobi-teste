@@ -44,7 +44,7 @@ export default function Home() {
     }
 
     loadBrandData();
-  }, []);
+  }, [dispatch]);
 
  return (
    <Container>
